@@ -1,0 +1,1 @@
+export { default as InternalServerError } from './ui/internal-server.vue'

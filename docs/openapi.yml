@@ -1,0 +1,364 @@
+openapi: 3.0.0
+info:
+  title: Pomodoro RPG API
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8080
+    description: Local server
+
+tags:
+  - name: Auth
+    description: ユーザー認証API
+  - name: Account
+    description: アカウントAPI
+  - name: Time
+    description: ポモドーロAPI
+
+paths:
+  /is-auth:
+    get:
+      tags:
+        - Auth
+      summary: |
+        Cookieに含まれているTokenを検証し、認証済みか判定を行うAPI
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  isAuthenticated:
+                    type: boolean
+        500:
+          $ref: '#/components/responses/InternalServerError'
+
+  /signup:
+    post:
+      tags:
+        - Auth
+      summary: 会員仮登録
+      description: |
+        メールアドレスとパスワードを入力し、会員の仮登録を行う。<br>
+        登録が成功すると入力したメールアドレスに、確認メールを送信する。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: "テスト太郎"
+                email:
+                  type: string
+                  example: "user@example.com"
+                password:
+                  type: string
+                  example: "Password123!"
+      responses:
+        200:
+          description: Success
+        400:
+          $ref: '#/components/responses/InvalidRequest'
+        500:
+          $ref: '#/components/responses/InternalServerError'
+
+  /signin:
+    post:
+      tags:
+        - Auth
+      summary: ログイン
+      description: |
+        メールアドレスとパスワードでログインを行う。<br>
+        ログインに成功するとCookieに以下を保持する。<br>
+        - access_token
+        - id_token
+        - refresh_token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  example: "user@example.com"
+                password:
+                  type: string
+                  example: "Password123!"
+      responses:
+        200:
+          description: Success
+        400:
+          $ref: '#/components/responses/InvalidRequest'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        500:
+          $ref: '#/components/responses/InternalServerError'
+
+  /signout:
+    post:
+      tags:
+        - Auth
+      summary: ログアウト
+      description: |
+        ログアウトを行うAPI
+      responses:
+        200:
+          description: Success
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        500:
+          $ref: '#/components/responses/InternalServerError'
+
+  /signup/confirm:
+    post:
+      tags:
+        - Auth
+      summary: 会員本登録
+      description: |
+        メールアドレスと確認コードを使い、会員の本登録を行う。<br>
+        本登録完了後、ログインできるようになる。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  example: "user@example.com"
+                code:
+                  type: string
+                  example: "123456"
+      responses:
+        200:
+          description: Success
+        400:
+          $ref: '#/components/responses/InvalidRequest'
+        500:
+          $ref: '#/components/responses/InternalServerError'
+  
+  /forgot-password:
+    post:
+      tags:
+        - Auth
+      summary: パスワード初期化
+      description: |
+        メールアドレスを使用し、パスワード初期化を行う<br>
+        成功時に、確認コードを送信する
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  example: "user@example.com"
+      responses:
+        200:
+          description: Success
+        400:
+          $ref: '#/components/responses/InvalidRequest'
+        500:
+          $ref: '#/components/responses/InternalServerError'
+
+  /forgot-password/confirm:
+    post:
+      tags:
+        - Auth
+      summary: パスワード初期化
+      description: |
+        パスワードを設定する
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  example: "user@example.com"
+                code:
+                  type: string
+                  example: "123456"
+                password:
+                  type: string
+                  example: "Password-123"
+      responses:
+        200:
+          description: Success
+        400:
+          $ref: '#/components/responses/InvalidRequest'
+        500:
+          $ref: '#/components/responses/InternalServerError'
+
+  /change-password:
+    post:
+      tags:
+        - Auth
+      summary: パスワード変更
+      description: |
+        パスワードを更新する
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                previousPassword:
+                  type: string
+                  example: "OldPassword-123"
+                proposedPassword:
+                  type: string
+                  example: "NewPassword-123"
+      responses:
+        200:
+          description: Success
+        400:
+          $ref: '#/components/responses/InvalidRequest'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        500:
+          $ref: '#/components/responses/InternalServerError'
+
+  /accounts:
+    get:
+      tags:
+        - Account
+      summary: アカウント取得
+      description: |
+        accessTokenからアカウント情報を取得する
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Account'
+        400:
+          $ref: '#/components/responses/InvalidRequest'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        500:
+          $ref: '#/components/responses/InternalServerError'
+    put:
+      tags:
+          - Account
+      summary: アカウント更新
+      description: |
+        アカウント情報を更新する
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                image:
+                  type: string
+                  format: byte
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Account'
+        400:
+          $ref: '#/components/responses/InvalidRequest'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        500:
+          $ref: '#/components/responses/InternalServerError'
+      
+  /times:
+    post:
+      tags:
+        - Time
+      summary: タイマー記録
+      description: |
+        集中した時間を登録する
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                focusTime:
+                  type: integer
+                  description: "minutes"
+                  example: 20
+                executionDate:
+                  type: string
+                  description: "yyyy-MM-ddThh:mm"
+                  example: "2024-10-24T09:12"
+      responses:
+        200:
+          description: Success
+        400:
+          $ref: '#/components/responses/InvalidRequest'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        500:
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  schemas:
+    Account:
+      type: object
+      required:
+        - email
+        - name
+        - image
+      properties:
+        email: 
+          type: string
+          description: メールアドレス
+        name:
+          type: string
+          description: ユーザー名
+        image:
+          type: string
+          description: プロフィール画像
+    ErrorResponse:
+      type: object
+      properties:
+        code:
+          type: string
+          description: エラーコード
+        message:
+          type: string
+          description: エラーメッセージ
+
+  responses:
+    Unauthorized:
+      description: Unautorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    InvalidRequest:
+      description: InvalidRequest
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    InternalServerError:
+      description: InternalServerError
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
