@@ -31,8 +31,8 @@ jobs:
       #   run: |
       #     npm run eslint
       - name: build
-          run: |
-            npm run build
+        run: |
+          npm run build
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
